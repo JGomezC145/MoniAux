@@ -17,7 +17,7 @@ void setup(){
     startDisplayTask();
 }
 
-void loop(){
+void loop(){ //core 0
     serial_loop();
     
 }

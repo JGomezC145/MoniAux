@@ -4,7 +4,34 @@
 
 static unsigned long lastMsgMillis=0;
 
-void scanNetworks(){ /*  Copia exacta de tu scanNetworks()  */ }
+void scanNetworks() {
+	delay(1000);
+    
+    Serial.println("Escaneando redes WiFi...");
+    
+    int numRedes = WiFi.scanNetworks();
+    
+    if (numRedes == 0) {
+        Serial.println("No se encontraron redes WiFi.");
+    } else {
+        Serial.println("Redes WiFi encontradas:");
+        Serial.println("------------------------------------------------------");
+        Serial.println(" No. |  SSID                 | Señal (dBm) | Tipo");
+        Serial.println("------------------------------------------------------");
+        
+        for (int i = 0; i < numRedes; ++i) {
+            Serial.printf(" %2d  |  %-20s |  %4d dBm  |  %s\n",
+                          i + 1,
+                          WiFi.SSID(i).c_str(),
+                          WiFi.RSSI(i),
+                          WiFi.encryptionType(i) == WIFI_AUTH_OPEN ? "Abierta" : "Cifrada");
+        }
+        
+        Serial.println("------------------------------------------------------");
+    }
+    
+    WiFi.scanDelete();
+}
 
 void serial_setup(){
     textoCentrado("Conectando a Serial...", 94+9);
@@ -63,6 +90,11 @@ static void handleCommand(const String &msg){
         } else if(comm=="wfstat") {
             wifi_stat(); // Implementa esta función en wifi_ota.cpp
         }
+    } else if(msg.startsWith("settime:")) {
+        String timeStr = msg.substring(8);
+        updateTimeClient(timeStr); // Actualiza la hora en timeClient
+    } else {
+        Serial.println("Comando no reconocido: " + msg);
     }
 
 }
@@ -75,3 +107,34 @@ void serial_loop(){
         lastMsgMillis = millis();
     }
 }
+
+// can we update timeClient by serial? using arguments like "settime:HH:MM"?
+void updateTimeClient(const String &timeStr) {
+    Serial.println("====StartDebug: updateTimeClient====");
+    Serial.println("Str recibido: " + timeStr);
+    Serial.println("Str Length: " + String(timeStr.length()));
+    Serial.println("Str pos 2: " + String(timeStr[2]));
+    bool isValidFormat = (timeStr.length() == 5 && timeStr[2] == ':');
+    Serial.println("Formato válido: " + String(isValidFormat ? "Sí" : "No"));
+    Serial.println("==============EndDebug==============");
+
+    if (timeStr.length() == 5 && timeStr[2] == ':') { // formato HH:MM
+        hora = timeStr.substring(0, 2).toInt();
+        minutos = timeStr.substring(3, 5).toInt();
+        horaActualNew = (hora < 10 ? "0" + String(hora) : String(hora)) + ":" +
+                        (minutos < 10 ? "0" + String(minutos) : String(minutos));
+        Serial.println("Hora actualizada: " + horaActualNew);
+
+        // Actualiza la hora solo si ha cambiado
+				if (horaActualNew != horaActual) {
+					horaActual = horaActualNew;
+					// Actualiza solo la hora sin borrar toda la pantalla
+					tft.fillRect(10, 16, 108, 20, ST77XX_BLACK);
+					textoCentrado(horaActual, 23, ST77XX_WHITE, 3);
+				}
+                
+    } else {
+        Serial.println("Formato de hora inválido. Use HH:MM.");
+    }
+}
+

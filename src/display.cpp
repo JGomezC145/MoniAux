@@ -7,6 +7,13 @@
 // === Variables definidas aquí ===
 Adafruit_ST7735 tft(TFT_CS, TFT_DC, TFT_RST);
 
+// get temperature from the internal core sensor
+
+void getTemperature() {
+    float temp = (float)temperatureRead() / 1000.0; // Convertir a grados Celsius
+    textoCentrado("Temp Chip: " + String(temp, 1) + " °C", 70, ST77XX_WHITE, 2);
+}
+
 // --------------------
 // helpers
 // --------------------
@@ -50,7 +57,7 @@ void setStatus(StatusType c,bool ok){
 	}
 }
 
-static void TaskDisplay(void *pvParameters) {
+static void TaskDisplay(void *pvParameters) { // core 1
     (void)pvParameters; // Evita warning de parámetro no usado
 	static unsigned long lastNTPUpdate = 0;
 

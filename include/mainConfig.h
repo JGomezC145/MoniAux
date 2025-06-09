@@ -39,3 +39,4 @@ extern const char* password;  // <--
 #define TFT_WIDTH 128
 #define TFT_HEIGHT 128
 #define SPI_SPEED 40000000  // Velocidad SPI para TFT
+
