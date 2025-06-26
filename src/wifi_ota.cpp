@@ -7,9 +7,10 @@ NTPClient timeClient(ntpUDP, NTP_SERVER, TIMEZONE_OFFSET, 60000);
 bool otaON     = false;
 bool connectedWifi   = false;
 bool connectedSerial = false;
+int lastPercent;
 
 bool wifi_connect(){
-    
+    delay(500);
     textoCentrado("Conectando a WiFi...", 94);
     WiFi.begin(ssid,password);
     WiFi.setHostname(HostName);
@@ -48,16 +49,44 @@ void syncTime(){
 }
 
 static void onOtaStart(){
-    otaON=true;
-    textoCentrado("OTA Iniciada",30);
+    otaON = true;
+    String type =
+        (ArduinoOTA.getCommand() == U_FLASH) ? "Firmware" : "Filesystem";
+
+    Serial.println("Iniciando OTA: " + type);
+    tft.fillScreen(ST77XX_BLACK);
+    textoCentrado("OTA Iniciada", 30);
+    escribir("OTA: ", 10, 50);
 }
-static void onOtaEnd(){ ESP.restart(); }
-static void onOtaError(ota_error_t){ ESP.restart(); }
+static void onOtaEnd(){ 
+    Serial.println("\nOTA Completada. Reiniciando...");
+    textoCentrado("OTA Completada!", 30);
+    delay(2000);
+    ESP.restart();
+}
+static void onOtaError(ota_error_t error){ 
+    Serial.printf("Error OTA [%u]!\n", error);
+    tft.fillScreen(ST77XX_RED);
+    textoCentrado("Error OTA!", 30);
+    delay(5000);
+    ESP.restart(); 
+}
 
 void ota_setup(){
     String HostNameOTA = String(HostName) + "OTA";
     ArduinoOTA.setHostname(HostNameOTA.c_str());
     ArduinoOTA.onStart(onOtaStart);
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+		int percent = (progress * 100) / total;
+		Serial.printf("Progreso OTA: %u%%\r\n", percent);
+
+		// Mostrar progreso en pantalla
+		tft.fillRect(10, 50, 100, 20, ST77XX_BLACK);
+		textoCentrado(String(percent) + "%", 50);
+
+		// Barra de progreso centrada
+		tft.fillRect(0, 70, (percent * 128) / 100, 10, ST77XX_GREEN);
+		});
     ArduinoOTA.onEnd(onOtaEnd);
     ArduinoOTA.onError(onOtaError);
     ArduinoOTA.begin();
