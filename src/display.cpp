@@ -10,8 +10,8 @@ Adafruit_ST7735 tft(TFT_CS, TFT_DC, TFT_RST);
 // get temperature from the internal core sensor
 
 void getTemperature() {
-    float temp = (float)temperatureRead() / 1000.0; // Convertir a grados Celsius
-    textoCentrado("Temp Chip: " + String(temp, 1) + " °C", 70, ST77XX_WHITE, 2);
+    float temp = (float)temperatureRead(); // Convertir a grados Celsius
+    textoCentrado("Temp Chip: " + String(temp, 1) + " °C", 70, ST77XX_RED, 1);
 }
 
 // --------------------
@@ -65,7 +65,7 @@ static void TaskDisplay(void *pvParameters) { // core 1
 		if (!otaON) {
 			if (millis() - lastNTPUpdate > 1000) { // Actualiza cada 60s
 				timeClient.update();
-
+                getTemperature();
 				// hora actual en formato HH:MM
 				hora = timeClient.getHours();
 				minutos = timeClient.getMinutes();
@@ -86,6 +86,31 @@ static void TaskDisplay(void *pvParameters) { // core 1
 		delay(1000);
 	}
     
+}
+
+void updateTime() {
+	static unsigned long lastNTPUpdate = 0;
+	if (!otaON) {
+		if (millis() - lastNTPUpdate > 5000) { // Actualiza cada 60s
+			timeClient.update();
+			getTemperature();
+			// hora actual en formato HH:MM
+			hora = timeClient.getHours();
+			minutos = timeClient.getMinutes();
+			horaActualNew = (hora < 10 ? "0" + String(hora) : String(hora)) + ":" +
+				(minutos < 10 ? "0" + String(minutos) : String(minutos));
+			lastNTPUpdate = millis();
+
+			// Actualiza la hora solo si ha cambiado
+			if (horaActualNew != horaActual) {
+				horaActual = horaActualNew;
+				// Actualiza solo la hora sin borrar toda la pantalla
+				tft.fillRect(10, 16, 108, 20, ST77XX_BLACK);
+				textoCentrado(horaActual, 23, ST77XX_WHITE, 3);
+			}
+		}
+	}
+
 }
 
 // Inicializa HW y crea la tarea en core 1

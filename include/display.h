@@ -15,3 +15,4 @@ void setStatus(StatusType c, bool ok);
 // Tarea que actualiza hora y otros indicadores (se corre en core 1)
 void startDisplayTask();
 void getTemperature();
+void updateTime();
