@@ -39,7 +39,7 @@ void serial_setup(){
     Serial.setTimeout(200);
     delay(100);
     Serial.println("hello");
-    //textoCentrado("Esperando respuesta...",60);
+    textoCentrado("Esperando respuesta...",60);
     while(!Serial.available()) delay(100);
     if(Serial.readStringUntil('\n')=="world"){
         connectedSerial=true;
@@ -87,9 +87,67 @@ static void handleCommand(const String &msg){
             setStatus(WIFIST,false);
             tft.fillScreen(ST77XX_BLACK);
             textoCentrado("WiFi Desconectado",60);
+        } else if (comm.startsWith("conwf")) {
+            // cuando se envie el comando "conwf" se conecta a la red suministrada
+            // formato: comm:conwf SSID;PASS
+            String mensaje = msg;
+            String ssid = mensaje.substring(11, mensaje.indexOf(';'));
+            String pass = mensaje.substring(mensaje.indexOf(';') + 1);
+            WiFi.begin(ssid.c_str(), pass.c_str());
+            int retry = 0;
+            Serial.println("Conectando a " + ssid);
+            tft.fillScreen(ST77XX_BLACK);
+            textoCentrado("Conectando a WiFi...", 20);
+            escribir(ssid, 0, 35);
+            escribir("Password: " + pass, 0, 45);
+            while (WiFi.status() != WL_CONNECTED && retry < 20) {
+                delay(500);
+                Serial.print(".");
+                retry++;
+            }
+            
+            if (WiFi.status() == WL_CONNECTED) {
+                Serial.println("\nWiFi Conectado!");
+                Serial.print("IP: ");
+                Serial.println(WiFi.localIP());
+                connectedWifi = true;
+                setStatus(WIFIST, true);
+                tft.fillScreen(ST77XX_BLACK);
+                textoCentrado("WiFi OK!", 94);
+                textoCentrado("Conectado a " + String(ssid), 104);
+                textoCentrado("IP: " + WiFi.localIP().toString(), 114);
+                textoCentrado("Obteniendo hora...", 94);
+                timeClient.begin();
+                while (!timeClient.update()) {
+                    timeClient.forceUpdate();
+                    delay(500);
+                }
+                hora = timeClient.getHours();
+                minutos = timeClient.getMinutes() - 1;
+                horaActualNew = (hora < 10 ? "0" + String(hora) : String(hora)) + ":" +
+                    (minutos < 10 ? "0" + String(minutos) : String(minutos));
+                delay(2000);
+            }
+            else {
+                Serial.println("\nError de conexión WiFi");
+                tft.fillScreen(ST77XX_RED);
+                textoCentrado("WiFi Error!", 30);
+                Serial.println(WiFi.status());
+                setStatus(WIFIST, false);
+                return;
+            }
+
         } else if(comm=="wfstat") {
             wifi_stat(); // Implementa esta función en wifi_ota.cpp
-        }
+        } else if (comm == "restart") {
+				updateLEDColor(0, 255, 0); // Verde
+				otaON = true;
+				tft.fillScreen(ST77XX_BLACK);
+				textoCentrado("Reiniciando...", 60, ST77XX_RED, 1);
+				delay(2000);
+				updateLEDColor(0, 0, 0); // Apagar LED
+				ESP.restart();
+		}
     } else if(msg.startsWith("settime:")) {
         String timeStr = msg.substring(8);
         updateTimeClient(timeStr); // Actualiza la hora en timeClient
@@ -106,9 +164,10 @@ void serial_loop(){
         handleCommand(line);
         lastMsgMillis = millis();
     }
+    
+    
 }
 
-// can we update timeClient by serial? using arguments like "settime:HH:MM"?
 void updateTimeClient(const String &timeStr) {
     Serial.println("====StartDebug: updateTimeClient====");
     Serial.println("Str recibido: " + timeStr);
@@ -132,7 +191,7 @@ void updateTimeClient(const String &timeStr) {
 					tft.fillRect(10, 16, 108, 20, ST77XX_BLACK);
 					textoCentrado(horaActual, 23, ST77XX_WHITE, 3);
 				}
-                
+
     } else {
         Serial.println("Formato de hora inválido. Use HH:MM.");
     }
