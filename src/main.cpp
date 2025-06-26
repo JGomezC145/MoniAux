@@ -14,10 +14,9 @@ void setup(){
     
     serial_setup();   // handshake con MCU interno
     
-    startDisplayTask();
+    //startDisplayTask();
 }
 
 void loop(){ //core 0
     serial_loop();
-    
 }
