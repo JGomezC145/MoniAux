@@ -147,18 +147,19 @@ static void handleCommand(const String &msg){
 				delay(2000);
 				updateLEDColor(0, 0, 0); // Apagar LED
 				ESP.restart();
-		}
+		} else if (comm=="clearScreen") {
+        tft.fillScreen(ST77XX_BLACK);
+        }
     } else if(msg.startsWith("settime:")) {
         String timeStr = msg.substring(8);
         updateTimeClient(timeStr); // Actualiza la hora en timeClient
     } else {
         Serial.println("Comando no reconocido: " + msg);
-    }
+    } 
 
 }
 
 void serial_loop(){
-    ArduinoOTA.handle();           // mantener OTA
     if(Serial.available()){
         String line = Serial.readStringUntil('\n');
         handleCommand(line);
