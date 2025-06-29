@@ -16,6 +16,8 @@ struct InputEvent {
     char           data;     // solo usado si type == KEYPAD_CHAR
 };
 
+#define ENC_STEP 4 // pasos por click del encoder
+
 void startInputTask();                 // crea la tarea en Core 1
 bool getInputEvent(InputEvent& ev,
                    TickType_t timeout = 0);   // lee de la cola

@@ -73,15 +73,15 @@ static void TaskInput(void*){
 
         // --- encoder detents ---
         int32_t diff = encSteps - lastDisp;        // pasos nuevos
-        if ( diff <= -4 ) {                        // 4 pasos → 1 click izq
+        if ( diff <= -ENC_STEP ) {                        // 4 pasos → 1 click izq
             InputEvent ev{ ENC_ROT_LEFT, 0 };
             xQueueSend(qInput, &ev, 0);
-            lastDisp -= 4;                         // consume los 4
+            lastDisp -= ENC_STEP;                         // consume los 4
         }
-        else if ( diff >= 4 ) {                    // 4 pasos → 1 click der
+        else if ( diff >= ENC_STEP ) {                    // 4 pasos → 1 click der
             InputEvent ev{ ENC_ROT_RIGHT, 0 };
             xQueueSend(qInput, &ev, 0);
-            lastDisp += 4;
+            lastDisp += ENC_STEP;
         }
 
         vTaskDelay(scanPeriod);
