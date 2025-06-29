@@ -2,7 +2,7 @@
 #include "display.h"
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, NTP_SERVER, TIMEZONE_OFFSET, 60000);
+NTPClient timeClient(ntpUDP, NTP_SERVER, TIMEZONE_OFFSET, NTP_UPDATE_INTERVAL);
 
 bool otaON     = false;
 bool connectedWifi   = false;
@@ -12,6 +12,7 @@ int lastPercent;
 bool wifi_connect(){
     delay(500);
     textoCentrado("Conectando a WiFi...", 94);
+    WiFi.setHostname(HostName);
     WiFi.begin(ssid,password);
     WiFi.setHostname(HostName);
     WiFi.setAutoReconnect(true);
@@ -78,7 +79,7 @@ void ota_setup(){
     ArduinoOTA.onStart(onOtaStart);
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
 		int percent = (progress * 100) / total;
-		Serial.printf("Progreso OTA: %u%%\r\n", percent);
+		//Serial.printf("Progreso OTA: %u%%\r\n", percent);
 
 		// Mostrar progreso en pantalla
 		tft.fillRect(10, 50, 100, 20, ST77XX_BLACK);

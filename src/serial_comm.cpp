@@ -34,18 +34,19 @@ void scanNetworks() {
 }
 
 void serial_setup(){
-    textoCentrado("Conectando a Serial...", 94+9);
+    textoCentrado("Conectando a Serial...", 103);
     Serial.begin(SerialBaudRate);
     Serial.setTimeout(200);
     delay(100);
     Serial.println("hello");
-    textoCentrado("Esperando respuesta...",60);
-    while(!Serial.available()) delay(100);
-    if(Serial.readStringUntil('\n')=="world"){
+    //textoCentrado("Esperando respuesta...",60);
+    //while(!Serial.available()) delay(100);
+    /*if(Serial.readStringUntil('\n')=="world"){
         connectedSerial=true;
         setStatus(SERIALST,true);
-    }
-    textoCentrado("Listo!",94+9+9);
+    }*/
+    delay(100);
+    textoCentrado("Listo!",112);
     delay(300);
     tft.fillScreen(ST77XX_BLACK);
 }
@@ -149,6 +150,40 @@ static void handleCommand(const String &msg){
 				ESP.restart();
 		} else if (comm=="clearScreen") {
         tft.fillScreen(ST77XX_BLACK);
+        } else if (comm.startsWith("setRGB:")) {
+            // Actualizar color del LED RGB formato de entrada: "setRGB:R,G,B,bright" brigh es opcional
+
+            String rgbValues = comm.substring(7);
+            int comma1 = rgbValues.indexOf(',');
+            int comma2 = rgbValues.indexOf(',', comma1 + 1);
+            int comma3 = rgbValues.indexOf(',', comma2 + 1);
+            if (comma1 != -1 && comma2 != -1) {
+                int r = rgbValues.substring(0, comma1).toInt();
+                int g = rgbValues.substring(comma1 + 1, comma2).toInt();
+                int b = rgbValues.substring(comma2 + 1, comma3).toInt();
+                int bright = (comma3 != -1) ? rgbValues.substring(comma3 + 1).toInt() : 255; // Valor por defecto de brillo
+                updateLEDColor(r, g, b, bright);
+                Serial.printf("Color LED actualizado: R=%d, G=%d, B=%d, Brightness=%d\n", r, g, b, bright);
+            } else {
+                Serial.println("Formato de comando setRGB inválido. Use: setRGB:R,G,B[,bright]");
+            }
+        } else if (comm == "forceUpdateTime") {
+            // Forzar actualización de la hora
+            timeClient.forceUpdate();
+            hora = timeClient.getHours();
+            minutos = timeClient.getMinutes() - 1;
+            horaActualNew = (hora < 10 ? "0" + String(hora) : String(hora)) + ":" +
+                            (minutos < 10 ? "0" + String(minutos) : String(minutos));
+            Serial.println("Hora actualizada: " + horaActualNew);
+            // Actualiza solo la hora sin borrar toda la pantalla
+            if (horaActualNew != horaActual) {
+                horaActual = horaActualNew;
+                tft.fillRect(10, 16, 108, 20, ST77XX_BLACK);
+                textoCentrado(horaActual, 23, ST77XX_WHITE, 3);
+            }
+            
+        } else {
+            Serial.println("Comando desconocido: " + comm);
         }
     } else if(msg.startsWith("settime:")) {
         String timeStr = msg.substring(8);

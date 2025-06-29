@@ -15,12 +15,13 @@
 // ----------------------------------
 extern const char* ssid;      // <--  
 extern const char* password;  // <--  
+#define HostName "MoniAux" // Nombre del host para el dispositivo WiFi y posible mDNS
 
 // -> WiFi subconfig 
 #define NTP_SERVER "pool.ntp.org"  // Servidor NTP para sincronización de hora
 #define TIMEZONE_OFFSET -21600  // Offset de zona horaria (UTC -6)
+#define NTP_UPDATE_INTERVAL 60000  // Intervalo de actualización NTP en segundos
 
-#define HostName "moniaux" // Nombre del host para el dispositivo WiFi y posible mDNS
 
 
 // --------------------

@@ -11,13 +11,20 @@ Adafruit_ST7735 tft(TFT_CS, TFT_DC, TFT_RST);
 
 void getTemperature() {
     float temp = (float)temperatureRead(); // Convertir a grados Celsius
-    textoCentrado("Temp Chip: " + String(temp, 1) + " °C", 70, ST77XX_RED, 1);
+    textoCentrado("Temp Chip: " + String(temp, 1) + " C", 70, ST77XX_RED, 1);
 }
 
 // --------------------
 // helpers
 // --------------------
-void updateLEDColor(int r,int g,int b){ neopixelWrite(RGB_PIN,r,g,b); }
+void updateLEDColor(int r,int g,int b, int brightness) { 
+	r = (r * brightness) / 255; // Ajusta el brillo
+	g = (g * brightness) / 255; // same
+	b = (b * brightness) / 255; // same
+
+	neopixelWrite(RGB_PIN,r,g,b); 
+
+}
 
 void textoCentrado(const String &txt,int y,uint16_t color,int sz){
     int x=(128-(txt.length()*(6*sz)))/2;
@@ -38,21 +45,21 @@ void setStatus(StatusType c,bool ok){
     if (c == 1) {
 		if (ok) {
 			tft.drawRGBBitmap(113, 0, sta_wifiok, 15, 15);
-			Serial.println("WiFi update status: OK");
+			//Serial.println("WiFi update status: OK");
 		}
 		else {
 			tft.drawRGBBitmap(113, 0, sta_wifibad, 15, 15);
-			Serial.println("WiFi update status: BAD");
+			//Serial.println("WiFi update status: BAD");
 		}
 	}
 	else if (c == 2) {
 		if (ok) {
 			tft.drawRGBBitmap(95, 0, sta_serialok, 15, 15);
-			Serial.println("Serial update status: OK");
+			//Serial.println("Serial update status: OK");
 		}
 		else {
 			tft.drawRGBBitmap(95, 0, sta_serialbad, 15, 15);
-			Serial.println("Serial update status: BAD");
+			//Serial.println("Serial update status: BAD");
 		}
 	}
 }
@@ -60,12 +67,13 @@ void setStatus(StatusType c,bool ok){
 static void TaskDisplay(void *pvParameters) { // core 1
     (void)pvParameters; // Evita warning de parámetro no usado
 	static unsigned long lastNTPUpdate = 0;
+	static unsigned long lastStatusUpdate = 0;
 
 	while (1) {
 		if (!otaON) {
 			if (millis() - lastNTPUpdate > 1000) { // Actualiza cada 60s
 				timeClient.update();
-                getTemperature();
+                //getTemperature();
 				// hora actual en formato HH:MM
 				hora = timeClient.getHours();
 				minutos = timeClient.getMinutes();
@@ -80,7 +88,28 @@ static void TaskDisplay(void *pvParameters) { // core 1
 					tft.fillRect(10, 16, 108, 20, ST77XX_BLACK);
 					textoCentrado(horaActual, 23, ST77XX_WHITE, 3);
 				}
+				
 			}
+
+			// cada 5 segundos verifica si hay cambios en el estado de WiFi o Serial
+			if (millis() - lastStatusUpdate > 5000) {
+				// Actualiza el estado de WiFi y Serial
+				if (connectedWifi) {
+					setStatus(WIFIST, true); // WiFi OK
+					String ip = WiFi.localIP().toString(); // Si WiFi está conectado, obtiene la IP
+					textoCentrado(ip, 70, ST77XX_WHITE, 1); // Muestra la IP en la pantalla
+				} else {
+					setStatus(WIFIST, false); // WiFi BAD
+					textoCentrado("              ", 70, ST77XX_WHITE, 1); // elimina la IP de la pantalla
+				}
+				if (connectedSerial) {
+					setStatus(SERIALST, true); // Serial OK
+				} else {
+					setStatus(SERIALST, false); // Serial BAD
+				}
+				lastStatusUpdate = millis();
+			}
+			
 		}
 
 		delay(1000);
