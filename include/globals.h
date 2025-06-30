@@ -15,6 +15,6 @@ extern String horaActualNew; // Variable temporal para almacenar la hora
 extern uint8_t hora;
 extern uint8_t minutos;
 
-// LED RGB builtin (esp32-s3)
+// LED RGB builtin (esp32-s3) 
 #define RGB_PIN RGB_BUILTIN
-void updateLEDColor(int r, int g, int b);
+void updateLEDColor(int r, int g, int b, int brightness = 255); // Actualiza el color del LED RGB
