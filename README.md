@@ -1,5 +1,7 @@
 # MoniAux
 
+![GitHub repo size](https://img.shields.io/github/repo-size/JGomezC145/MoniAux)
+
 MoniAux es un sistema embebido basado en ESP32-S3 que integra una pantalla TFT, entrada mediante teclado matricial y encoder rotativo, y conectividad WiFi para sincronización horaria y actualizaciones OTA. Está diseñado como una plataforma de monitoreo y control con interfaz visual y entrada física, ideal para proyectos de automatización o interacción hombre-máquina.
 
 > ![IMPORTANT]
